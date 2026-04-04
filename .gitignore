@@ -1,0 +1,13 @@
+# the raw Lichess dump is ~1.1 GB — never commit it
+data/*.csv
+data/*.zst
+
+node_modules/
+web/dist/
+web/node_modules/
+
+# exported propensity logs
+shahmat_attempts_*.json
+
+*.log
+.DS_Store
