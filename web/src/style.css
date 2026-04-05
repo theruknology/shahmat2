@@ -1,0 +1,60 @@
+/* Instrument panel, not dashboard. Monospace, greyscale + 2 semantic accents,
+   1px hairlines, border-radius 0, tabular figures. */
+
+:root {
+  --bg: #0a0a0b;
+  --panel: #101012;
+  --line: #26262b;
+  --line-bright: #3a3a42;
+  --ink: #c9c9cf;
+  --ink-dim: #7a7a85;
+  --ink-faint: #4d4d55;
+  --ok: #4ec872;
+  --bad: #e5484d;
+  --hot: #e0a53c;
+  --mono: "Berkeley Mono", "JetBrains Mono", "IBM Plex Mono", ui-monospace,
+    "SF Mono", Menlo, Consolas, monospace;
+}
+
+* {
+  box-sizing: border-box;
+  border-radius: 0 !important;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.35;
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+}
+
+#app {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+}
+.ok {
+  color: var(--ok);
+}
+.bad {
+  color: var(--bad);
+}
+.hot {
+  color: var(--hot);
+}
+.dim {
+  color: var(--ink-dim);
+}
+.faint {
+  color: var(--ink-faint);
+}
