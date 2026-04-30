@@ -58,3 +58,74 @@ body {
 .faint {
   color: var(--ink-faint);
 }
+
+/* main grid */
+.grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 260px minmax(360px, 1fr) 320px;
+  min-height: 0;
+}
+.col {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+.col.center {
+  border-left: 1px solid var(--line);
+  border-right: 1px solid var(--line);
+  align-items: center;
+  justify-content: center;
+  padding: 14px;
+}
+
+/* board */
+.board-wrap {
+  width: min(64vh, 100%);
+  aspect-ratio: 1;
+}
+#board {
+  width: 100%;
+  height: 100%;
+}
+.cg-wrap {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  display: block;
+}
+
+/* controls */
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.controls .row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+select,
+button {
+  font-family: var(--mono);
+  font-size: 12px;
+  background: #17171a;
+  color: var(--ink);
+  border: 1px solid var(--line-bright);
+  padding: 4px 8px;
+  cursor: pointer;
+}
+button:hover,
+select:hover {
+  border-color: var(--ink-dim);
+}
+button:active {
+  background: #202025;
+}
+.verdict {
+  min-height: 18px;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
