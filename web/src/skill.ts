@@ -7,6 +7,8 @@ export const SCALE = 173.7;
 
 export const PRIOR_MU = 1200;
 export const PRIOR_SIGMA = 350; // Glicko-style initial rating deviation
+const SIGMA_FLOOR = 45; // never let a theme collapse to certainty
+const SIGMA_CEIL = 400;
 
 export function sigmoid(x: number): number {
   return 1 / (1 + Math.exp(-x));
@@ -52,7 +54,8 @@ function adfUpdate(
   const postMu = m1 / z;
   let postVar = m2 / z - postMu * postMu;
   if (postVar < 0) postVar = 0;
-  const postSigma = Math.sqrt(postVar);
+  let postSigma = Math.sqrt(postVar);
+  postSigma = Math.min(SIGMA_CEIL, Math.max(SIGMA_FLOOR, postSigma));
   return { mu: postMu, sigma: postSigma };
 }
 
