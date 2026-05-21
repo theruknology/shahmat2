@@ -7,8 +7,9 @@ import { Chessground } from "chessground";
 import type { Api } from "chessground/api";
 import type { Key } from "chessground/types";
 
-import type { Puzzle, ThemeSkill } from "./types";
+import type { Puzzle, PolicyName, ThemeSkill } from "./types";
 import { PuzzleSession } from "./game";
+import { select, mulberry32, type Selection } from "./policy";
 import { applyAttempt, puzzleMu, newSkill } from "./skill";
 
 const CORE_THEMES = [
@@ -26,13 +27,23 @@ const CORE_THEMES = [
   "trappedPiece",
 ];
 
+const POLICIES: PolicyName[] = [
+  "max_info",
+  "rating_match",
+  "random",
+];
+
 // ---- app state ----
 let puzzles: Puzzle[] = [];
 const skills = new Map<string, ThemeSkill>();
 for (const t of CORE_THEMES) if (!skills.has(t)) skills.set(t, newSkill(t));
 
+let policy: PolicyName = "max_info";
+const rng = mulberry32((Date.now() & 0xffffffff) >>> 0);
+
 let cg: Api;
 let session: PuzzleSession | null = null;
+let selection: Selection | null = null;
 let locked = false; // true after solved/failed, until next
 
 // ---- DOM skeleton ----
@@ -40,6 +51,8 @@ const app = document.getElementById("app")!;
 app.innerHTML = `
   <div class="statusbar">
     <span class="brand">SHAHMAT</span>
+    <span class="sep">|</span>
+    <span>policy=<span id="s-policy" class="hot">max_info</span></span>
     <span class="sep">|</span>
     <span class="dim">corpus <span id="s-corpus" class="num">-</span></span>
   </div>
@@ -59,6 +72,7 @@ app.innerHTML = `
         <h2>Controls</h2>
         <div class="controls">
           <div class="row">
+            <select id="c-policy"></select>
             <button id="c-next">next &raquo;</button>
           </div>
         </div>
@@ -68,6 +82,20 @@ app.innerHTML = `
 `;
 
 const el = (id: string) => document.getElementById(id)!;
+
+// policy selector
+const sel = el("c-policy") as HTMLSelectElement;
+for (const p of POLICIES) {
+  const o = document.createElement("option");
+  o.value = p;
+  o.textContent = p;
+  sel.appendChild(o);
+}
+sel.value = policy;
+sel.addEventListener("change", () => {
+  policy = sel.value as PolicyName;
+  el("s-policy").textContent = policy;
+});
 
 el("c-next").addEventListener("click", () => nextPuzzle());
 
@@ -137,7 +165,7 @@ function meanMu(themes: string[]): number {
 }
 
 function finishPuzzle(correct: boolean): void {
-  if (!session || locked) return;
+  if (!session || !selection || locked) return;
   locked = true;
   const p = session.puzzle;
 
@@ -157,8 +185,8 @@ function finishPuzzle(correct: boolean): void {
 
 function nextPuzzle(): void {
   cg.setAutoShapes([]);
-  const pick = puzzles[Math.floor(Math.random() * puzzles.length)];
-  session = new PuzzleSession(pick);
+  selection = select(policy, puzzles, skills, rng);
+  session = new PuzzleSession(selection.puzzle);
   locked = false;
 
   cg.set({
@@ -179,6 +207,7 @@ function fmtSigned(n: number): string {
 }
 
 function renderStatus(): void {
+  el("s-policy").textContent = policy;
   el("s-corpus").textContent = String(puzzles.length);
 }
 

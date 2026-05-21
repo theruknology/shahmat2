@@ -13,3 +13,8 @@ export interface ThemeSkill {
   sigma: number;
   nObs: number;
 }
+
+export type PolicyName =
+  | "random"
+  | "rating_match"
+  | "max_info";
