@@ -30,4 +30,5 @@ export interface Attempt {
 export type PolicyName =
   | "random"
   | "rating_match"
-  | "max_info";
+  | "max_info"
+  | "thompson";

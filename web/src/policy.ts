@@ -106,6 +106,22 @@ export function select(
       version = "max_info@v1";
       break;
     }
+    case "thompson": {
+      // Posterior sampling flavour: inflate exploration by the posterior sigma so
+      // uncertain themes get probed more. Propensity is the (deterministic)
+      // softmax component -- an approximation to true Thompson propensity,
+      // documented as such for the OPE writeup.
+      const scores = puzzles.map((p) => {
+        const { mu, sigma } = puzzleMu(skills, p.themes);
+        const pc = pCorrect(mu, p.rating);
+        const info = pc * (1 - pc);
+        const explore = sigma / 350; // 0..~1
+        return BETA * (info + 0.5 * explore);
+      });
+      base = softmax(scores);
+      version = "thompson@v1";
+      break;
+    }
   }
 
   const probs = mixEpsilon(base, EPSILON);

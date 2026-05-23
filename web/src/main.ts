@@ -33,6 +33,7 @@ const CORE_THEMES = [
 ];
 
 const POLICIES: PolicyName[] = [
+  "thompson",
   "max_info",
   "rating_match",
   "random",
@@ -43,7 +44,7 @@ let puzzles: Puzzle[] = [];
 const skills = loadSkills();
 for (const t of CORE_THEMES) if (!skills.has(t)) skills.set(t, newSkill(t));
 
-let policy: PolicyName = "max_info";
+let policy: PolicyName = "thompson";
 const rng = mulberry32((Date.now() & 0xffffffff) >>> 0);
 
 let cg: Api;
@@ -59,7 +60,7 @@ app.innerHTML = `
   <div class="statusbar">
     <span class="brand">SHAHMAT</span>
     <span class="sep">|</span>
-    <span>policy=<span id="s-policy" class="hot">max_info</span></span>
+    <span>policy=<span id="s-policy" class="hot">thompson</span></span>
     <span class="sep">|</span>
     <span class="dim">corpus <span id="s-corpus" class="num">-</span></span>
   </div>
