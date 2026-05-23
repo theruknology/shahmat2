@@ -7,10 +7,15 @@ import { Chessground } from "chessground";
 import type { Api } from "chessground/api";
 import type { Key } from "chessground/types";
 
-import type { Puzzle, PolicyName, ThemeSkill } from "./types";
+import type { Puzzle, PolicyName, Attempt } from "./types";
 import { PuzzleSession } from "./game";
 import { select, mulberry32, type Selection } from "./policy";
 import { applyAttempt, puzzleMu, newSkill } from "./skill";
+import {
+  loadSkills,
+  saveSkills,
+  appendAttempt,
+} from "./store";
 
 const CORE_THEMES = [
   "fork",
@@ -35,7 +40,7 @@ const POLICIES: PolicyName[] = [
 
 // ---- app state ----
 let puzzles: Puzzle[] = [];
-const skills = new Map<string, ThemeSkill>();
+const skills = loadSkills();
 for (const t of CORE_THEMES) if (!skills.has(t)) skills.set(t, newSkill(t));
 
 let policy: PolicyName = "max_info";
@@ -44,6 +49,8 @@ const rng = mulberry32((Date.now() & 0xffffffff) >>> 0);
 let cg: Api;
 let session: PuzzleSession | null = null;
 let selection: Selection | null = null;
+let startTs = 0;
+let firstMoveTs = 0;
 let locked = false; // true after solved/failed, until next
 
 // ---- DOM skeleton ----
@@ -130,6 +137,7 @@ function onUserMove(orig: Key, dest: Key): void {
 function playMove(orig: Key, dest: Key): void {
   if (!session || locked) return;
   cg.setAutoShapes([]);
+  if (firstMoveTs === 0) firstMoveTs = Date.now();
 
   const uci = session.buildUci(orig, dest);
   const res = session.userMove(uci);
@@ -167,11 +175,27 @@ function meanMu(themes: string[]): number {
 function finishPuzzle(correct: boolean): void {
   if (!session || !selection || locked) return;
   locked = true;
+  const now = Date.now();
   const p = session.puzzle;
 
   const before = meanMu(p.themes);
   applyAttempt(skills, p.themes, p.rating, correct);
   const after = meanMu(p.themes);
+  saveSkills(skills);
+
+  const attempt: Attempt = {
+    puzzleId: p.id,
+    ts: now,
+    correct,
+    msToFirstMove: firstMoveTs ? firstMoveTs - startTs : -1,
+    msTotal: now - startTs,
+    themes: p.themes,
+    rating: p.rating,
+    policyVersion: selection.policyVersion,
+    propensity: selection.propensity,
+    candidateSetSize: selection.candidateSetSize,
+  };
+  appendAttempt(attempt);
 
   el("p-verdict").innerHTML = correct
     ? `<span class="ok">&#10003; SOLVED</span> <span class="faint">&Delta;&theta; ${fmtSigned(after - before)}</span>`
@@ -187,6 +211,8 @@ function nextPuzzle(): void {
   cg.setAutoShapes([]);
   selection = select(policy, puzzles, skills, rng);
   session = new PuzzleSession(selection.puzzle);
+  startTs = Date.now();
+  firstMoveTs = 0;
   locked = false;
 
   cg.set({

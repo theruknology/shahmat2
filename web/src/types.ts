@@ -14,6 +14,19 @@ export interface ThemeSkill {
   nObs: number;
 }
 
+export interface Attempt {
+  puzzleId: string;
+  ts: number;
+  correct: boolean;
+  msToFirstMove: number;
+  msTotal: number;
+  themes: string[];
+  rating: number;
+  policyVersion: string;
+  propensity: number; // P(this puzzle | state) under the behaviour policy
+  candidateSetSize: number;
+}
+
 export type PolicyName =
   | "random"
   | "rating_match"
