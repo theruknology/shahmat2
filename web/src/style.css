@@ -80,6 +80,52 @@ body {
   padding: 14px;
 }
 
+/* theme heatmap rows */
+.theme-row {
+  display: grid;
+  grid-template-columns: 62px 44px 1fr;
+  gap: 8px;
+  align-items: center;
+  padding: 2px 0;
+}
+.theme-row .tname {
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.theme-row .tmu {
+  text-align: right;
+  color: var(--ink);
+}
+.bar {
+  display: flex;
+  gap: 2px;
+  height: 9px;
+}
+.bar .cell {
+  flex: 1;
+  background: var(--ink-faint);
+}
+.bar .cell.on {
+  background: var(--ink);
+}
+.theme-row.weak .tmu {
+  color: var(--hot);
+}
+.theme-row.weak .bar .cell.on {
+  background: var(--hot);
+}
+
+/* key/value lines */
+.kv {
+  display: flex;
+  justify-content: space-between;
+  padding: 1px 0;
+}
+.kv .k {
+  color: var(--ink-dim);
+}
+
 /* board */
 .board-wrap {
   width: min(64vh, 100%);

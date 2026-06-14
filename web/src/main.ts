@@ -54,6 +54,8 @@ let startTs = 0;
 let firstMoveTs = 0;
 let locked = false; // true after solved/failed, until next
 
+const sess = { served: 0, solved: 0, times: [] as number[], dTheta: 0 };
+
 // ---- DOM skeleton ----
 const app = document.getElementById("app")!;
 app.innerHTML = `
@@ -62,10 +64,21 @@ app.innerHTML = `
     <span class="sep">|</span>
     <span>policy=<span id="s-policy" class="hot">thompson</span></span>
     <span class="sep">|</span>
+    <span>served <span id="s-served" class="num">0</span></span>
+    <span>solved <span id="s-acc" class="num">0%</span></span>
+    <span class="sep">|</span>
     <span class="dim">corpus <span id="s-corpus" class="num">-</span></span>
   </div>
   <div class="grid">
     <div class="col left">
+      <div class="panel grow">
+        <h2><span>Theme &theta;</span><span class="faint">mu &plusmn;sd</span></h2>
+        <div id="p-themes"></div>
+      </div>
+      <div class="panel">
+        <h2>Session</h2>
+        <div id="p-session"></div>
+      </div>
     </div>
     <div class="col center">
       <div class="board-wrap"><div id="board"></div>
@@ -198,11 +211,18 @@ function finishPuzzle(correct: boolean): void {
   };
   appendAttempt(attempt);
 
+  sess.served++;
+  if (correct) sess.solved++;
+  sess.times.push(now - startTs);
+  sess.dTheta += after - before;
+
   el("p-verdict").innerHTML = correct
     ? `<span class="ok">&#10003; SOLVED</span> <span class="faint">&Delta;&theta; ${fmtSigned(after - before)}</span>`
     : `<span class="bad">&#10007; ${session.expectedUci()} was best</span>`;
 
   renderStatus();
+  renderThemes();
+  renderSession();
 
   // auto-advance
   window.setTimeout(() => nextPuzzle(), correct ? 650 : 2200);
@@ -229,13 +249,62 @@ function nextPuzzle(): void {
 }
 
 // ---- renderers ----
+function fmt(n: number, d = 0): string {
+  return n.toFixed(d);
+}
 function fmtSigned(n: number): string {
   return (n >= 0 ? "+" : "") + n.toFixed(0);
 }
 
 function renderStatus(): void {
   el("s-policy").textContent = policy;
+  el("s-served").textContent = String(sess.served);
+  const acc = sess.served ? Math.round((100 * sess.solved) / sess.served) : 0;
+  el("s-acc").textContent = `${acc}%`;
   el("s-corpus").textContent = String(puzzles.length);
+}
+
+function renderThemes(): void {
+  const rows = CORE_THEMES.map((t) => {
+    const s = skills.get(t)!;
+    const conf = Math.max(0, Math.min(1, 1 - s.sigma / 350));
+    const cells = Math.round(conf * 5);
+    const bar = Array.from({ length: 5 }, (_, i) =>
+      i < cells ? `<span class="cell on"></span>` : `<span class="cell"></span>`,
+    ).join("");
+    const overall = meanAll();
+    const weak = s.mu < overall - 40;
+    return `<div class="theme-row ${weak ? "weak" : ""}">
+      <span class="tname">${t}</span>
+      <span class="tmu num">${fmt(s.mu)}</span>
+      <span class="bar" title="sd ${fmt(s.sigma)}">${bar}</span>
+    </div>`;
+  });
+  el("p-themes").innerHTML = rows.join("");
+}
+
+function meanAll(): number {
+  let sum = 0;
+  for (const t of CORE_THEMES) sum += skills.get(t)!.mu;
+  return sum / CORE_THEMES.length;
+}
+
+function renderSession(): void {
+  const acc = sess.served ? Math.round((100 * sess.solved) / sess.served) : 0;
+  const med = median(sess.times);
+  el("p-session").innerHTML = `
+    <div class="kv"><span class="k">solved</span><span class="num">${sess.solved}/${sess.served} ${acc}%</span></div>
+    <div class="kv"><span class="k">median time</span><span class="num">${med ? (med / 1000).toFixed(1) : "-"}s</span></div>
+    <div class="kv"><span class="k">&Delta;&theta; session</span><span class="num ${sess.dTheta >= 0 ? "ok" : "bad"}">${fmtSigned(sess.dTheta)}</span></div>
+    <div class="kv"><span class="k">mean &theta;</span><span class="num">${fmt(meanAll())}</span></div>
+  `;
+}
+
+function median(xs: number[]): number {
+  if (xs.length === 0) return 0;
+  const s = [...xs].sort((a, b) => a - b);
+  const m = Math.floor(s.length / 2);
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
 }
 
 // ---- boot ----
@@ -243,6 +312,8 @@ async function boot(): Promise<void> {
   const res = await fetch("./puzzles.json");
   puzzles = (await res.json()) as Puzzle[];
   renderStatus();
+  renderThemes();
+  renderSession();
   nextPuzzle();
 }
 
