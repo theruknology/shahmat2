@@ -14,7 +14,9 @@ import { applyAttempt, puzzleMu, newSkill } from "./skill";
 import {
   loadSkills,
   saveSkills,
+  loadAttempts,
   appendAttempt,
+  exportAttempts,
 } from "./store";
 
 const CORE_THEMES = [
@@ -89,12 +91,19 @@ app.innerHTML = `
         <h2>Puzzle</h2>
         <div id="p-verdict" class="verdict"></div>
       </div>
+      <div class="panel grow">
+        <h2>Attempt Log</h2>
+        <div id="p-log"></div>
+      </div>
       <div class="panel">
         <h2>Controls</h2>
         <div class="controls">
           <div class="row">
             <select id="c-policy"></select>
             <button id="c-next">next &raquo;</button>
+          </div>
+          <div class="row">
+            <button id="c-export">export log</button>
           </div>
         </div>
       </div>
@@ -119,6 +128,7 @@ sel.addEventListener("change", () => {
 });
 
 el("c-next").addEventListener("click", () => nextPuzzle());
+el("c-export").addEventListener("click", () => exportAttempts());
 
 // ---- board ----
 cg = Chessground(el("board"), {
@@ -223,6 +233,7 @@ function finishPuzzle(correct: boolean): void {
   renderStatus();
   renderThemes();
   renderSession();
+  renderLog();
 
   // auto-advance
   window.setTimeout(() => nextPuzzle(), correct ? 650 : 2200);
@@ -300,6 +311,23 @@ function renderSession(): void {
   `;
 }
 
+function renderLog(): void {
+  const all = loadAttempts();
+  const recent = all.slice(-14).reverse();
+  el("p-log").innerHTML = recent
+    .map((a) => {
+      const t = a.themes[0] ?? "-";
+      const secs = a.msTotal > 0 ? (a.msTotal / 1000).toFixed(1) : "-";
+      return `<div class="log-row">
+        <span class="mark ${a.correct ? "ok" : "bad"}">${a.correct ? "&#10003;" : "&#10007;"}</span>
+        <span class="num">${a.rating}</span>
+        <span class="num dim">${secs}s</span>
+        <span class="dim">${t}</span>
+      </div>`;
+    })
+    .join("");
+}
+
 function median(xs: number[]): number {
   if (xs.length === 0) return 0;
   const s = [...xs].sort((a, b) => a - b);
@@ -314,6 +342,7 @@ async function boot(): Promise<void> {
   renderStatus();
   renderThemes();
   renderSession();
+  renderLog();
   nextPuzzle();
 }
 

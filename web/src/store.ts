@@ -37,3 +37,15 @@ export function appendAttempt(a: Attempt): void {
   all.push(a);
   localStorage.setItem(K_ATTEMPTS, JSON.stringify(all));
 }
+
+// Export the full propensity log for off-policy evaluation in Part B.
+export function exportAttempts(): void {
+  const data = JSON.stringify(loadAttempts(), null, 2);
+  const blob = new Blob([data], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `shahmat_attempts_${Date.now()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
