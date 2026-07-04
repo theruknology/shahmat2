@@ -100,7 +100,11 @@ app.innerHTML = `
         <div class="controls">
           <div class="row">
             <select id="c-policy"></select>
-            <button id="c-next">next &raquo;</button>
+            <button id="c-next" title="n">next &raquo;</button>
+          </div>
+          <div class="row">
+            <button id="c-hint" title="h">hint</button>
+            <button id="c-flip" title="f">flip</button>
           </div>
           <div class="row">
             <button id="c-export">export log</button>
@@ -128,6 +132,20 @@ sel.addEventListener("change", () => {
 });
 
 el("c-next").addEventListener("click", () => nextPuzzle());
+el("c-hint").addEventListener("click", () => showHint());
+el("c-flip").addEventListener("click", () => cg.toggleOrientation());
+document.addEventListener("keydown", (e) => {
+  if (e.target instanceof HTMLSelectElement || e.metaKey || e.ctrlKey) return;
+  if (e.key === "n") nextPuzzle();
+  else if (e.key === "h") showHint();
+  else if (e.key === "f") cg.toggleOrientation();
+});
+
+function showHint(): void {
+  if (!session || locked) return;
+  const sq = session.hintSquare() as Key;
+  cg.setAutoShapes([{ orig: sq, brush: "green" }]);
+}
 el("c-export").addEventListener("click", () => exportAttempts());
 
 // ---- board ----

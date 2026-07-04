@@ -59,6 +59,11 @@ export class PuzzleSession {
     return from + to + (promo ? "q" : "");
   }
 
+  // Square the solver should move from next (for hints).
+  hintSquare(): string {
+    return this.puzzle.moves[this.idx].slice(0, 2);
+  }
+
   private applyUci(uci: string): void {
     const u = parseUci(uci);
     this.chess.move({ from: u.from, to: u.to, promotion: u.promotion });
