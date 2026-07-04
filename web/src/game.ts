@@ -64,6 +64,18 @@ export class PuzzleSession {
     return this.puzzle.moves[this.idx].slice(0, 2);
   }
 
+  // Would this legal move deliver checkmate? Alternate mates are accepted.
+  private isMating(uci: string): boolean {
+    const probe = new Chess(this.chess.fen());
+    try {
+      const u = parseUci(uci);
+      probe.move({ from: u.from, to: u.to, promotion: u.promotion });
+    } catch {
+      return false;
+    }
+    return probe.isCheckmate();
+  }
+
   private applyUci(uci: string): void {
     const u = parseUci(uci);
     this.chess.move({ from: u.from, to: u.to, promotion: u.promotion });
@@ -86,6 +98,12 @@ export class PuzzleSession {
   } {
     const expected = this.puzzle.moves[this.idx];
     if (uci !== expected) {
+      // Any checkmate is as good as the book mate; it ends the puzzle.
+      if (this.isMating(uci)) {
+        this.applyUci(uci);
+        this.idx = this.puzzle.moves.length;
+        return { correct: true, solved: true };
+      }
       return { correct: false, solved: false };
     }
 
