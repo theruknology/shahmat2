@@ -84,6 +84,7 @@ app.innerHTML = `
     </div>
     <div class="col center">
       <div class="board-wrap"><div id="board"></div>
+        <div id="promo" class="promo" hidden></div>
       </div>
     </div>
     <div class="col right">
@@ -173,15 +174,38 @@ function refreshBoardMovable(): void {
 
 function onUserMove(orig: Key, dest: Key): void {
   if (!session || locked) return;
+  if (session.needsPromotion(orig, dest)) {
+    askPromotion(session.turnColor(), (piece) => playMove(orig, dest, piece));
+    return;
+  }
   playMove(orig, dest);
 }
 
-function playMove(orig: Key, dest: Key): void {
+// Small overlay letting the user pick the promotion piece (allows underpromotion).
+function askPromotion(color: "white" | "black", done: (p: string) => void): void {
+  const box = el("promo");
+  const glyph: Record<string, string> =
+    color === "white"
+      ? { q: "\u2655", r: "\u2656", b: "\u2657", n: "\u2658" }
+      : { q: "\u265B", r: "\u265C", b: "\u265D", n: "\u265E" };
+  box.innerHTML = Object.keys(glyph)
+    .map((p) => `<button data-p="${p}">${glyph[p]}</button>`)
+    .join("");
+  box.hidden = false;
+  box.onclick = (e) => {
+    const p = (e.target as HTMLElement).dataset?.p;
+    if (!p) return;
+    box.hidden = true;
+    done(p);
+  };
+}
+
+function playMove(orig: Key, dest: Key, promotion = "q"): void {
   if (!session || locked) return;
   cg.setAutoShapes([]);
   if (firstMoveTs === 0) firstMoveTs = Date.now();
 
-  const uci = session.buildUci(orig, dest);
+  const uci = session.buildUci(orig, dest, promotion);
   const res = session.userMove(uci);
 
   if (!res.correct) {
@@ -258,6 +282,7 @@ function finishPuzzle(correct: boolean): void {
 }
 
 function nextPuzzle(): void {
+  el("promo").hidden = true;
   cg.setAutoShapes([]);
   selection = select(policy, puzzles, skills, rng);
   session = new PuzzleSession(selection.puzzle);

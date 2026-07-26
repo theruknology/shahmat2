@@ -51,12 +51,17 @@ export class PuzzleSession {
     return map;
   }
 
-  // Turn a chessground (orig,dest) drag into a UCI string, auto-queening.
-  buildUci(from: string, to: string): string {
-    const promo = this.chess
+  // True if from->to is a pawn promotion, so the UI must ask for a piece.
+  needsPromotion(from: string, to: string): boolean {
+    return this.chess
       .moves({ verbose: true })
       .some((m) => m.from === from && m.to === to && m.promotion);
-    return from + to + (promo ? "q" : "");
+  }
+
+  // Turn a chessground (orig,dest) drag into a UCI string. `promotion` is the
+  // piece letter chosen by the user (q/r/b/n) for promotion moves.
+  buildUci(from: string, to: string, promotion = "q"): string {
+    return from + to + (this.needsPromotion(from, to) ? promotion : "");
   }
 
   // Square the solver should move from next (for hints).

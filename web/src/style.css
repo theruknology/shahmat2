@@ -243,3 +243,9 @@ button:active {
   font-weight: 600;
   letter-spacing: 1px;
 }
+
+.board-wrap { position: relative; }
+.promo { position: absolute; inset: 0; display: flex; align-items: center;
+  justify-content: center; gap: 8px; background: rgba(0,0,0,.6); z-index: 10; }
+.promo[hidden] { display: none; }
+.promo button { font-size: 44px; width: 64px; height: 64px; cursor: pointer; }
