@@ -55,6 +55,7 @@ let selection: Selection | null = null;
 let startTs = 0;
 let firstMoveTs = 0;
 let locked = false; // true after solved/failed, until next
+const sessionStart = Date.now();
 
 const sess = { served: 0, solved: 0, times: [] as number[], dTheta: 0 };
 
@@ -64,12 +65,16 @@ app.innerHTML = `
   <div class="statusbar">
     <span class="brand">SHAHMAT</span>
     <span class="sep">|</span>
+    <span id="s-clock" class="num dim">00:00</span>
+    <span class="sep">|</span>
     <span>policy=<span id="s-policy" class="hot">thompson</span></span>
     <span class="sep">|</span>
     <span>served <span id="s-served" class="num">0</span></span>
     <span>solved <span id="s-acc" class="num">0%</span></span>
     <span class="sep">|</span>
     <span class="dim">corpus <span id="s-corpus" class="num">-</span></span>
+    <span class="sep">|</span>
+    <span class="dim">compute<span id="s-heart" class="hot blink"> #</span></span>
   </div>
   <div class="grid">
     <div class="col left">
@@ -377,6 +382,17 @@ function median(xs: number[]): number {
   const m = Math.floor(s.length / 2);
   return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
 }
+
+// clock + heartbeat
+let heart = 0;
+setInterval(() => {
+  const secs = Math.floor((Date.now() - sessionStart) / 1000);
+  const mm = String(Math.floor(secs / 60)).padStart(2, "0");
+  const ss = String(secs % 60).padStart(2, "0");
+  el("s-clock").textContent = `${mm}:${ss}`;
+  heart = (heart + 1) % 4;
+  el("s-heart").textContent = " " + "#*+.".charAt(heart);
+}, 1000);
 
 // ---- boot ----
 async function boot(): Promise<void> {
