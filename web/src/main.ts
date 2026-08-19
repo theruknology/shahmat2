@@ -55,6 +55,7 @@ let selection: Selection | null = null;
 let startTs = 0;
 let firstMoveTs = 0;
 let locked = false; // true after solved/failed, until next
+let advanceTimer: number | undefined;
 const sessionStart = Date.now();
 
 const sess = { served: 0, solved: 0, times: [] as number[], dTheta: 0 };
@@ -282,11 +283,12 @@ function finishPuzzle(correct: boolean): void {
   renderSession();
   renderLog();
 
-  // auto-advance
-  window.setTimeout(() => nextPuzzle(), correct ? 650 : 2200);
+  // auto-advance (cancelled if the user skips manually)
+  advanceTimer = window.setTimeout(() => nextPuzzle(), correct ? 650 : 2200);
 }
 
 function nextPuzzle(): void {
+  clearTimeout(advanceTimer);
   el("promo").hidden = true;
   cg.setAutoShapes([]);
   selection = select(policy, puzzles, skills, rng);
