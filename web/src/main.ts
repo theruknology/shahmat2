@@ -10,7 +10,7 @@ import type { Key } from "chessground/types";
 import type { Puzzle, PolicyName, Attempt } from "./types";
 import { PuzzleSession } from "./game";
 import { select, mulberry32, type Selection } from "./policy";
-import { applyAttempt, puzzleMu, newSkill } from "./skill";
+import { applyAttempt, puzzleMu, pCorrect, newSkill } from "./skill";
 import {
   loadSkills,
   saveSkills,
@@ -95,7 +95,8 @@ app.innerHTML = `
     </div>
     <div class="col right">
       <div class="panel">
-        <h2>Puzzle</h2>
+        <h2>Puzzle / Model</h2>
+        <div id="p-puzzle"></div>
         <div id="p-verdict" class="verdict"></div>
       </div>
       <div class="panel grow">
@@ -306,6 +307,7 @@ function nextPuzzle(): void {
   refreshBoardMovable();
 
   el("p-verdict").textContent = "";
+  renderPuzzle();
   renderStatus();
 }
 
@@ -358,6 +360,22 @@ function renderSession(): void {
     <div class="kv"><span class="k">median time</span><span class="num">${med ? (med / 1000).toFixed(1) : "-"}s</span></div>
     <div class="kv"><span class="k">&Delta;&theta; session</span><span class="num ${sess.dTheta >= 0 ? "ok" : "bad"}">${fmtSigned(sess.dTheta)}</span></div>
     <div class="kv"><span class="k">mean &theta;</span><span class="num">${fmt(meanAll())}</span></div>
+  `;
+}
+
+function renderPuzzle(): void {
+  if (!session || !selection) return;
+  const p = session.puzzle;
+  const { mu, sigma } = puzzleMu(skills, p.themes);
+  const pc = pCorrect(mu, p.rating);
+  el("p-puzzle").innerHTML = `
+    <div class="kv"><span class="k">id</span><span class="num">${p.id}</span></div>
+    <div class="kv"><span class="k">rating b_p</span><span class="num">${p.rating}</span></div>
+    <div class="kv"><span class="k">themes</span><span>${p.themes.join(" ")}</span></div>
+    <div class="kv"><span class="k">your &theta;</span><span class="num">${fmt(mu)} &plusmn;${fmt(sigma)}</span></div>
+    <div class="kv"><span class="k">P(solve)</span><span class="num hot">${(pc * 100).toFixed(0)}%</span></div>
+    <div class="kv"><span class="k">propensity</span><span class="num faint">${selection.propensity.toExponential(2)}</span></div>
+    <div class="kv"><span class="k">to move</span><span>${session.orientation}</span></div>
   `;
 }
 
