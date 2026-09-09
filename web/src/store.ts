@@ -38,6 +38,11 @@ export function appendAttempt(a: Attempt): void {
   localStorage.setItem(K_ATTEMPTS, JSON.stringify(all));
 }
 
+export function resetAll(): void {
+  localStorage.removeItem(K_SKILLS);
+  localStorage.removeItem(K_ATTEMPTS);
+}
+
 // Export the full propensity log for off-policy evaluation in Part B.
 export function exportAttempts(): void {
   const data = JSON.stringify(loadAttempts(), null, 2);

@@ -17,6 +17,7 @@ import {
   loadAttempts,
   appendAttempt,
   exportAttempts,
+  resetAll,
 } from "./store";
 
 const CORE_THEMES = [
@@ -116,6 +117,7 @@ app.innerHTML = `
           </div>
           <div class="row">
             <button id="c-export">export log</button>
+            <button id="c-reset">reset</button>
           </div>
         </div>
       </div>
@@ -155,6 +157,11 @@ function showHint(): void {
   cg.setAutoShapes([{ orig: sq, brush: "green" }]);
 }
 el("c-export").addEventListener("click", () => exportAttempts());
+el("c-reset").addEventListener("click", () => {
+  if (!confirm("Erase all skill posteriors and the attempt log?")) return;
+  resetAll();
+  location.reload();
+});
 
 // ---- board ----
 cg = Chessground(el("board"), {
